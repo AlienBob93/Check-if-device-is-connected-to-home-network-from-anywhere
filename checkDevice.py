@@ -1,6 +1,6 @@
 import sys 
 import imaplib 
-import os
+import subprocess as OS
 import time
 
 
@@ -9,11 +9,12 @@ mail = imaplib.IMAP4_SSL('imap.gmail.com')
 
 USER = 'YOUR EMAIL ID'
 PASS = 'YOUR EMAIL PASSWORD'
-MAC = 'DEVICE MAC ID TO LOOK FOR'
+MAC_1 = 'DEVICE MAC ID TO LOOK FOR'
+MAC_2 = 'DEVICE MAC ID TO LOOK FOR'
+# Add more MAC IDs 
 
 try:
-	mail.login(USER, PASS)# getpass.getpass())
-	#mail.select("Inbox")
+	mail.login(USER, PASS)
 except imaplib.IMAP4.error:
 	print "LOGIN FAILED!!"
 
@@ -25,14 +26,19 @@ while True:
 		if data:
 			print "received"
 			# replace with different network parameters if applicable
-			sca = os.system('nmap -sn 192.168.1.1-255 | grep "%s"'%MAC)
+			sca = OS.check_output(['nmap','-sn','10.0.0.1-255'])
 			print sca
-			if sca != 256:
-				print "found"
-				os.system('./pushbullet.sh "Connected"')
-			else:
-				print "nope!"
-				os.system('./pushbullet.sh "Not Connected"')
+			if sca:
+				if MAC_1 in sca:
+                                        print "XXX is home"
+                                        OS.call(['./pushbullet.sh','XXX is home'])
+                                if MAC_2 in sca:
+                                        print "XXX is home"
+                                        OS.call(['./pushbullet.sh','XXX is home'])
+                                # Add more if necessary        
+                                if not MAC_1 in sca and not MAC_2 in sca:  
+					print "No one is around :("
+	                               	OS.call(['./pushbullet.sh','No one is around :('])
 		# Deleting the request message
 		data = ','.join(data.split(' '))
        		rv, data2 = mail.fetch(data, '(FLAGS)')
@@ -42,5 +48,5 @@ while True:
       		print "cleaning up..."
 		del sca
 	except:
-		#print "nothing"
+		#wait for 5 seconds
 		time.sleep(5)
